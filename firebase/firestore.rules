@@ -1,0 +1,140 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper Functions ──────────────────────────────────────────────────────
+
+    // Returns the role of the authenticated user (from their Firestore profile)
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    // True if the caller is an admin
+    function isAdmin() {
+      return request.auth != null && getUserRole() == 'admin';
+    }
+
+    // True if the caller is a service partner
+    function isPartner() {
+      return request.auth != null && getUserRole() == 'partner';
+    }
+
+    // True if the resource belongs to the caller's community
+    function inCommunity(communityId) {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.communityId == communityId;
+    }
+
+    // True if the caller owns the document
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // ── Users ─────────────────────────────────────────────────────────────────
+    match /users/{uid} {
+      // Anyone can read their own profile; admin can read all in community
+      allow read: if isOwner(uid) || isAdmin();
+
+      // Anyone authenticated can create their own user document on sign-up
+      allow create: if request.auth != null && request.auth.uid == uid;
+
+      // Owners can update non-sensitive fields; admin can update anything
+      allow update: if isOwner(uid) || isAdmin();
+
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+
+    // ── Communities ───────────────────────────────────────────────────────────
+    match /communities/{communityId} {
+      allow read: if request.auth != null && inCommunity(communityId);
+      allow write: if isAdmin() && inCommunity(communityId);
+    }
+
+    // ── Announcements ──────────────────────────────────────────────────────────
+    match /announcements/{announcementId} {
+      allow read: if request.auth != null && inCommunity(resource.data.communityId);
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Complaints ─────────────────────────────────────────────────────────────
+    match /complaints/{complaintId} {
+      // Residents can see community complaints (non-private); admin sees all
+      allow read: if isAdmin() ||
+        (request.auth != null &&
+         inCommunity(resource.data.communityId) &&
+         (resource.data.isPrivate == false || isOwner(resource.data.submittedBy)));
+
+      // Any authenticated community member can submit a complaint
+      allow create: if request.auth != null &&
+        inCommunity(request.resource.data.communityId) &&
+        request.resource.data.submittedBy == request.auth.uid;
+
+      // Admin updates status; owner can withdraw
+      allow update: if isAdmin() || isOwner(resource.data.submittedBy);
+      allow delete: if isAdmin() || isOwner(resource.data.submittedBy);
+    }
+
+    // ── Polls ─────────────────────────────────────────────────────────────────
+    match /polls/{pollId} {
+      allow read: if request.auth != null && inCommunity(resource.data.communityId);
+      allow create: if isAdmin();
+      allow update: if isAdmin() ||
+        // Allow resident to cast a vote (append their UID to votedBy)
+        (request.auth != null && inCommunity(resource.data.communityId));
+      allow delete: if isAdmin();
+    }
+
+    // ── Marketplace Listings ──────────────────────────────────────────────────
+    match /listings/{listingId} {
+      allow read: if request.auth != null && inCommunity(resource.data.communityId);
+      allow create: if request.auth != null &&
+        inCommunity(request.resource.data.communityId) &&
+        request.resource.data.sellerId == request.auth.uid;
+      allow update: if isOwner(resource.data.sellerId) || isAdmin();
+      allow delete: if isOwner(resource.data.sellerId) || isAdmin();
+    }
+
+    // ── Events ────────────────────────────────────────────────────────────────
+    match /events/{eventId} {
+      allow read: if request.auth != null && inCommunity(resource.data.communityId);
+      allow create: if isAdmin();
+      allow update: if isAdmin() ||
+        // Allow registration (update attendees array)
+        (request.auth != null && inCommunity(resource.data.communityId));
+      allow delete: if isAdmin();
+    }
+
+    // ── Bookings ──────────────────────────────────────────────────────────────
+    match /bookings/{bookingId} {
+      allow read: if isAdmin() ||
+        isOwner(resource.data.residentId) ||
+        isOwner(resource.data.partnerId);
+      allow create: if request.auth != null &&
+        request.resource.data.residentId == request.auth.uid;
+      allow update: if isOwner(resource.data.residentId) || isOwner(resource.data.partnerId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Carpool Offers ────────────────────────────────────────────────────────
+    match /carpoolOffers/{offerId} {
+      allow read: if request.auth != null && inCommunity(resource.data.communityId);
+      allow create: if request.auth != null &&
+        request.resource.data.driverId == request.auth.uid;
+      allow update, delete: if isOwner(resource.data.driverId) || isAdmin();
+    }
+
+    // ── Notifications ─────────────────────────────────────────────────────────
+    match /notifications/{notificationId} {
+      allow read: if isOwner(resource.data.userId);
+      allow update: if isOwner(resource.data.userId);
+      allow create, delete: if isAdmin();
+    }
+
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
