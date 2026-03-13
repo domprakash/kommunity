@@ -17,9 +17,14 @@ const MarketplacePage  = lazy(() => import('@/pages/resident/MarketplacePage').t
 const ServicesPage     = lazy(() => import('@/pages/resident/ServicesPage').then(m => ({ default: m.ServicesPage })))
 const ProfilePage      = lazy(() => import('@/pages/resident/ProfilePage').then(m => ({ default: m.ProfilePage })))
 
-const AdminOverviewPage  = lazy(() => import('@/pages/admin/AdminOverviewPage').then(m => ({ default: m.AdminOverviewPage })))
-const ResidentsPage      = lazy(() => import('@/pages/admin/ResidentsPage').then(m => ({ default: m.ResidentsPage })))
-const ComplaintsAdminPage= lazy(() => import('@/pages/admin/ComplaintsAdminPage').then(m => ({ default: m.ComplaintsAdminPage })))
+const AdminOverviewPage    = lazy(() => import('@/pages/admin/AdminOverviewPage').then(m => ({ default: m.AdminOverviewPage })))
+const ResidentsPage        = lazy(() => import('@/pages/admin/ResidentsPage').then(m => ({ default: m.ResidentsPage })))
+const ComplaintsAdminPage  = lazy(() => import('@/pages/admin/ComplaintsAdminPage').then(m => ({ default: m.ComplaintsAdminPage })))
+const NoticesAdminPage     = lazy(() => import('@/pages/admin/NoticesAdminPage').then(m => ({ default: m.NoticesAdminPage })))
+const FinanceAdminPage     = lazy(() => import('@/pages/admin/FinanceAdminPage').then(m => ({ default: m.FinanceAdminPage })))
+const PollsAdminPage       = lazy(() => import('@/pages/admin/PollsAdminPage').then(m => ({ default: m.PollsAdminPage })))
+const MarketplaceAdminPage = lazy(() => import('@/pages/admin/MarketplaceAdminPage').then(m => ({ default: m.MarketplaceAdminPage })))
+const ReportsAdminPage     = lazy(() => import('@/pages/admin/ReportsAdminPage').then(m => ({ default: m.ReportsAdminPage })))
 
 const PartnerOverviewPage= lazy(() => import('@/pages/partner/PartnerOverviewPage').then(m => ({ default: m.PartnerOverviewPage })))
 
@@ -94,6 +99,11 @@ export default function App() {
           <Route index element={<AdminOverviewPage />} />
           <Route path="residents" element={<ResidentsPage />} />
           <Route path="complaints" element={<ComplaintsAdminPage />} />
+          <Route path="notices" element={<NoticesAdminPage />} />
+          <Route path="finance" element={<FinanceAdminPage />} />
+          <Route path="polls" element={<PollsAdminPage />} />
+          <Route path="marketplace" element={<MarketplaceAdminPage />} />
+          <Route path="reports" element={<ReportsAdminPage />} />
         </Route>
 
         {/* Partner */}
