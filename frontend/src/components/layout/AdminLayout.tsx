@@ -60,24 +60,31 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
 export function AdminLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   return (
-    <div className="app-shell flex">
-      <aside className="hidden lg:block w-60 bg-card border-r border-border shrink-0 h-full"><SidebarContent /></aside>
+    <div className="flex min-h-screen bg-slate-50">
+      {/* Desktop Sidebar — fixed */}
+      <aside className="hidden lg:flex w-64 bg-card border-r border-border shrink-0 flex-col fixed inset-y-0 left-0 z-20">
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile Drawer */}
       <AnimatePresence>
         {drawerOpen && (
           <>
             <motion.div key="overlay" initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }} className="fixed inset-0 bg-black/40 z-50 lg:hidden" onClick={() => setDrawerOpen(false)} />
-            <motion.aside key="drawer" initial={{ x:'-100%' }} animate={{ x:0 }} exit={{ x:'-100%' }} transition={{ type:'spring', stiffness:300, damping:30 }} className="fixed inset-y-0 left-0 w-72 bg-card z-50 lg:hidden">
+            <motion.aside key="drawer" initial={{ x:'-100%' }} animate={{ x:0 }} exit={{ x:'-100%' }} transition={{ type:'spring', stiffness:300, damping:30 }} className="fixed inset-y-0 left-0 w-64 bg-card z-50 lg:hidden flex flex-col">
               <SidebarContent onClose={() => setDrawerOpen(false)} />
             </motion.aside>
           </>
         )}
       </AnimatePresence>
-      <div className="flex-1 flex flex-col min-w-0 h-full">
-        <header className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-border bg-card">
+
+      {/* Main content offset by sidebar width on desktop */}
+      <div className="flex-1 flex flex-col lg:ml-64 min-w-0">
+        <header className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-border bg-card sticky top-0 z-10">
           <button onClick={() => setDrawerOpen(true)} className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center"><Menu className="w-5 h-5 text-foreground" /></button>
           <span className="font-semibold text-foreground">Admin Dashboard</span>
         </header>
-        <main className="flex-1 overflow-y-auto p-4 scrollbar-hide"><Outlet /></main>
+        <main className="flex-1 overflow-y-auto"><Outlet /></main>
       </div>
     </div>
   )
